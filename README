@@ -1,0 +1,5 @@
+IRC bot written in Haskell.
+
+IRC code based on http://www.haskell.org/haskellwiki/Roll_your_own_IRC_bot
+
+This looks up a webpage that is posted in a channel and posts its channel.
