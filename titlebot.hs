@@ -4,11 +4,15 @@ import Text.Printf
 import Data.List
 import System.Exit
 import Network.Curl
+import Text.Regex.Posix
+import Text.Regex.Base.RegexLike
 
 server  = "irc.freenode.org"
 port    = 6667
-chan    = "##lucs"
-nick    = "haskell_titlebot"
+chan    = "#lucs"
+nick    = "lucs_tb"
+
+pattern = ".*<title>(.+)</title>.*"
 
 -- Conenct to a server and print out what ever gets sent
 main = do
@@ -41,7 +45,7 @@ listen h = forever $ do
 
 -- Handles bot commands
 eval :: Handle -> String -> IO()
-eval h "!quit"                  = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
+--eval h "!quit"                  = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
 eval h x 
   | "!say" `isPrefixOf` x       = privmsg h (drop 4 x)
   | "http://" `isPrefixOf` x    = grabtitle h (takeWhile (/= ' ') x)
@@ -54,16 +58,36 @@ privmsg h s = write h "PRIVMSG" (chan ++ " :" ++ s)
 -- Will grab the title of a link
 grabtitle :: Handle -> String -> IO()
 grabtitle h s = do { header <- curlHead s [];
-                     privmsg h  $ "Title for " ++ s ++ " type of " ++ (getContent $ getFields header) }
+                     putStrLn (getContent $ getFields header);
+                     printtitle h s (getContent $ getFields header)}
+
+printtitle :: Handle -> String -> String -> IO()
+printtitle h url "text/html" =  do 
+                                  --resp <- curlGetResponse url []
+                                  resp <- curlGetString url []
+                                  --let title = getTitle (respBody resp)
+                                  let title = getTitle (snd resp)
+                                  if title /= "" then
+                                    privmsg h ("Title: " ++ title )
+                                  else
+                                    return ()
+printtitle h url _          = return ()
 
 -- Gets the content data
 getContent :: [(String, String)] -> String
 getContent []                           = "Eh"
 getContent (x:xs) 
-          | fst x == "Content-Type"    = snd x
+          | fst x == "Content-Type"    = tail(takeWhile (/= ';') (snd x))
           | otherwise                   = getContent xs
 
 -- Gets the field
 getFields :: (String, [(String, String)]) -> [(String, String)]
 getFields (_, field) = field
 
+-- Gets the title
+getTitle :: String -> String
+getTitle html
+        | result == []  = ""
+        | otherwise     = last(head(result))
+        where
+          result = html =~ pattern :: [[String]]
