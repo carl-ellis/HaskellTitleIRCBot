@@ -12,7 +12,9 @@ port    = 6667
 chan    = "#lucs"
 nick    = "lucs_tb"
 
-pattern = ".*<title>(.+)</title>.*"
+_LIMIT = 200
+
+pattern = makeRegexOpts (defaultCompOpt - compNewline) defaultExecOpt ".*<title>(.+)</title>.*"
 
 -- Conenct to a server and print out what ever gets sent
 main = do
@@ -45,7 +47,7 @@ listen h = forever $ do
 
 -- Handles bot commands
 eval :: Handle -> String -> IO()
---eval h "!quit"                  = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
+eval h "!quit1234"                  = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
 eval h x 
   | "!say" `isPrefixOf` x       = privmsg h (drop 4 x)
   | "http://" `isPrefixOf` x    = grabtitle h (takeWhile (/= ' ') x)
@@ -58,7 +60,6 @@ privmsg h s = write h "PRIVMSG" (chan ++ " :" ++ s)
 -- Will grab the title of a link
 grabtitle :: Handle -> String -> IO()
 grabtitle h s = do { header <- curlHead s [];
-                     putStrLn (getContent $ getFields header);
                      printtitle h s (getContent $ getFields header)}
 
 printtitle :: Handle -> String -> String -> IO()
@@ -66,7 +67,8 @@ printtitle h url "text/html" =  do
                                   --resp <- curlGetResponse url []
                                   resp <- curlGetString url []
                                   --let title = getTitle (respBody resp)
-                                  let title = getTitle (snd resp)
+                                  let title = take _LIMIT $ getTitle (snd resp)
+                                  putStrLn title
                                   if title /= "" then
                                     privmsg h ("Title: " ++ title )
                                   else
@@ -88,6 +90,13 @@ getFields (_, field) = field
 getTitle :: String -> String
 getTitle html
         | result == []  = ""
-        | otherwise     = last(head(result))
+        | otherwise     = stripNewLine $ last(head(result))
         where
-          result = html =~ pattern :: [[String]]
+          result = match pattern html :: [[String]]
+
+--Strips out newlines
+stripNewLine :: [Char] -> [Char]
+stripNewLine ""           = ""
+stripNewLine (x:xs)
+            | x == '\n'   = ' ' : stripNewLine xs
+            | otherwise   = x : stripNewLine xs 
