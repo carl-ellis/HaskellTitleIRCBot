@@ -1,3 +1,5 @@
+-- Toy bot in Haskell, Author Carl Ellis 2011
+
 import Network
 import System.IO
 import Text.Printf
@@ -9,8 +11,10 @@ import Text.Regex.Base.RegexLike
 
 server  = "irc.freenode.org"
 port    = 6667
-chan    = "#lucs"
-nick    = "lucs_tb"
+
+-- Remember to fill this in!
+chan    = ""
+nick    = ""
 
 _LIMIT = 200
 
