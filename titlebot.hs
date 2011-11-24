@@ -8,6 +8,8 @@ import System.Exit
 import Network.Curl
 import Text.Regex.Posix
 import Text.Regex.Base.RegexLike
+import qualified Data.Text as T
+import Web.Encodings
 
 server  = "irc.freenode.org"
 port    = 6667
@@ -94,7 +96,7 @@ getFields (_, field) = field
 getTitle :: String -> String
 getTitle html
         | result == []  = ""
-        | otherwise     = stripNewLine $ last(head(result))
+        | otherwise     = decodeHtml $ T.unpack $ T.strip $ T.pack $ stripNewLine $ last(head(result))
         where
           result = match pattern html :: [[String]]
 
