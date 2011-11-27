@@ -12,7 +12,7 @@ import Web.Encodings
 
 server  = "irc.freenode.org"
 port    = 6667
-chan    = "##lucs"
+chan    = "#lucs"
 nick    = "lucs_tb"
 
 _LIMIT = 200
@@ -93,7 +93,7 @@ getFields (_, field) = field
 getTitle :: String -> String
 getTitle html
         | result == []  = ""
-        | otherwise     = BSC.unpack $ BSC.pack $ decodeHtml $ T.unpack $ T.strip $ T.pack $ stripNewLine $ last(head(result))
+        | otherwise     = dropWhile (<= '1') $ BSC.unpack $ BSC.pack $ decodeHtml $ T.unpack $ T.strip $ T.pack $ stripNewLine $ last(head(result))
         where
           result = match pattern html :: [[String]]
 
