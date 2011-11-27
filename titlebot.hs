@@ -9,6 +9,7 @@ import Network.Curl
 import Text.Regex.Posix
 import Text.Regex.Base.RegexLike
 import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as BSC
 import Web.Encodings
 
 server  = "irc.freenode.org"
@@ -96,7 +97,7 @@ getFields (_, field) = field
 getTitle :: String -> String
 getTitle html
         | result == []  = ""
-        | otherwise     = decodeHtml $ T.unpack $ T.strip $ T.pack $ stripNewLine $ last(head(result))
+        | otherwise     = dropWhile (<= '1') $ BSC.unpack $ BSC.pack $ decodeHtml $ T.unpack $ T.strip $ T.pack $ stripNewLine $ last(head(result))
         where
           result = match pattern html :: [[String]]
 
